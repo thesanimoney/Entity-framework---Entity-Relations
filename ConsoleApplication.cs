@@ -1,12 +1,8 @@
-﻿// P03_StudentSystem.ConsoleApp
-
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using StudentSystem.Data.Models;
-using StudentSystem.Data.Seeding;
 using System;
+using System.Linq;
 
 namespace StudentSystem.ConsoleApp
 {
@@ -26,6 +22,9 @@ namespace StudentSystem.ConsoleApp
                     context.Database.Migrate();
 
                     DatabaseSeeder.Seed(services);
+
+                   
+                    DisplayStudentAndCourseInfo(context);
                 }
                 catch (Exception ex)
                 {
@@ -33,23 +32,48 @@ namespace StudentSystem.ConsoleApp
                     Console.WriteLine(ex.Message);
                 }
             }
+        }
 
-            // Your console application logic here
+        private static void DisplayStudentAndCourseInfo(StudentSystemContext context)
+        {
+            Console.WriteLine("Student and Course Information:");
+
+            // Display information about students
+            var students = context.Students.ToList();
+            foreach (var student in students)
+            {
+                Console.WriteLine($"Student ID: {student.StudentId}, Name: {student.Name}");
+                Console.WriteLine($"Enrolled Courses:");
+                foreach (var courseEnrollment in student.CoursesEnrolled)
+                {
+                    Console.WriteLine($"  - {courseEnrollment.Course.Name}");
+                }
+                Console.WriteLine();
+            }
+
+            // Display information about courses
+            var courses = context.Courses.ToList();
+            foreach (var course in courses)
+            {
+                Console.WriteLine($"Course ID: {course.CourseId}, Name: {course.Name}");
+                Console.WriteLine($"Enrolled Students:");
+                foreach (var studentEnrollment in course.StudentsEnrolled)
+                {
+                    Console.WriteLine($"  - {studentEnrollment.Student.Name}");
+                }
+                Console.WriteLine();
+            }
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
-                .ConfigureAppConfiguration((hostingContext, config) =>
-                {
-                    config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
-                })
                 .ConfigureServices((hostContext, services) =>
                 {
                     services.AddDbContext<StudentSystemContext>(options =>
                         options.UseSqlServer(
                             hostContext.Configuration.GetConnectionString("DefaultConnection")));
 
-                    // Other services...
+                    // Add other services if needed...
 
                 });
     }
